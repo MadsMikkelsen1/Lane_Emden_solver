@@ -6,3 +6,13 @@ $$\frac{1}{\xi} \frac{\text{d}}{\text{d}\xi} \left( \xi^2 \frac{\text{d}\theta}{
 where n is the polytropic index.
 
 The first step taken to solve it numerically is to split the equation into two coupled, first-order differential equations.
+
+We can rewrite the Lane-Emden equation into the following 
+
+$$ \frac{2}{\xi} \frac{\text{d}\theta}{\text{d}\xi} + \frac{\text{d}^2\theta}{\text{d}\xi^2} = -\theta^n $$
+
+and split it in the following way
+
+$$ 1) \quad \frac{\text{d}\theta}{\text{d}\xi} = - \frac{\phi}{\xi^2} $$
+
+$$ 2) \quad \frac{\text{d}\phi}{\text{d}\xi} = \theta^n \xi^2 $$
