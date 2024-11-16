@@ -17,7 +17,7 @@ def runkutt(y, t, dt, n):
 def g(y, t, n):
     v = np.zeros(2)
     v[0] = -y[1] / t**2 if t != 0 else 0  # Prevent division by zero
-    v[1] = (y[0]**n) * t**2 if y[0] >= 0 else 0
+    v[1] = (y[0]**n) * t**2 if y[0] >= 0 else 0  # Prevent invalid value in power
     return v
 
 # Solve the Lane-Emden equation for a given polytropic index n
@@ -44,47 +44,30 @@ def lane_emden_solver(n):
         i += 1
     return np.array(t), np.array(y1), np.array(y2)
 
-plt.figure(figsize=(12, 8))
+# Plot the results for n = 0 to 5 in steps of 0.5
+plt.figure(figsize=(10.24, 7.68))
 n_values = np.arange(0, 5.5, 0.5)
 
 # Store xi values where theta hits zero and related parameters
 xi_values_at_theta_zero = []
 results = []
 
-# Constants
-m_sun = 1.989e30  # Solar mass in kg
-r_sun = 6.957e8   # Solar radius in meters
-G = 6.67430e-11   # Gravitational constant
-
 for n in n_values:
     xi, theta, d_theta = lane_emden_solver(n)
     plt.plot(xi, theta, label=f'n = {n}')
     if len(xi) > 0:
         xi_1 = xi[-1]
-        d_theta_xi_1 = d_theta[-1]
+        # Calculate d_theta/d_xi at xi_1 using backward difference
+        if len(xi) > 2:
+            d_theta_xi_1 = (theta[-1] - theta[-2]) / (xi[-1] - xi[-2])
+        else:
+            d_theta_xi_1 = d_theta[-1]  # Fallback if there aren't enough points
         xi_values_at_theta_zero.append((n, xi_1))
         if n != 0 and n != 5:  # Skip special cases for n=0 and n=5 in calculations
-            # Calculating K
-            term1 = G / (n + 1)
-            term2 = np.power(1.0 * m_sun, 1 - 1 / n) * np.power(1.0 * r_sun, -1 + 3 / n)  # Using M = 1 M_sun, R = 1 R_sun
-            term3 = 4 * np.pi
-            term4 = np.power(xi_1, n + 1) * np.power(d_theta_xi_1, n - 1)
-            K = term1 * term2 * np.power(term3 / term4, 1 / n)
-
-            # Calculating the central pressure and pressure profile
-            term1_p = 8.952e+14 * np.power(1.0, 2) * np.power(1.0, -4)  # Using M = 1 M_sun, R = 1 R_sun
-            term2_p = (n + 1) * np.power(d_theta_xi_1, 2)
-            P_c = term1_p / term2_p  # dyne/cm^2
-            P = P_c * np.power(theta, n + 1)
-
-            # Calculating central density and density profile
-            rho_c = np.power(P_c / K, n / (n + 1))
-            rho = rho_c * np.power(theta, n)
-
-            D_n = (-3 / (xi_1 * d_theta_xi_1))**-1
+            # Recalculating D_n, M_n, R_n, and B_n with updated formulas
+            D_n = -xi_1 / (3 * d_theta_xi_1)
             M_n = -xi_1**2 * d_theta_xi_1
-            alpha = ((n + 1) * K / (4 * np.pi * G * rho_c**((n - 1) / n)))**0.5
-            R_n = alpha * xi_1
+            R_n = xi_1  # Stellar radius corresponds to xi_1
             B_n = (1 / (n + 1)) * (-xi_1**2 * d_theta_xi_1)**(-2 / 3)
             results.append((n, D_n, M_n, R_n, B_n))
 
@@ -99,17 +82,16 @@ plt.legend()
 plt.show()
 
 # Print a table of xi values where theta hits zero
-print(f"{'Polytropic Index (n)':<20}{'Xi at Theta=0':<20}")
+print(f"{'Poly Index (n)':<20}{'Xi at Theta=0':<20}")
 print("-" * 40)
 for n, xi_zero in xi_values_at_theta_zero:
     print(f"{n:<20}{xi_zero:<20.4f}")
 
 # Print a table of D_n, M_n, R_n, and B_n values
-print(f"\n{'Polytropic Index (n)':<20}{'D_n':<20}{'M_n':<20}{'R_n':<20}{'B_n':<20}")
+print(f"\n{'Poly Index (n)':<20}{'D_n':<20}{'M_n':<20}{'R_n':<20}{'B_n':<20}")
 print("-" * 100)
 for n, D_n, M_n, R_n, B_n in results:
     print(f"{n:<20}{D_n:<20.4f}{M_n:<20.4f}{R_n:<20.4f}{B_n:<20.4f}")
-
 
 ## Task 3 ##
 ## Compute D_n, R_n, M_n and B_n for each n. Careful with cases n = 0 and n = 5 // Choose constants carefully ##
